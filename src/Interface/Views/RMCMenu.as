@@ -139,37 +139,37 @@ namespace RMC
 
                 bool RMT_isServerOK = false;
 
-				if (PluginSettings::RMC_Together_ClubId > 0 && PluginSettings::RMC_Together_RoomId > 0) {
-					UI::BeginDisabled(MXNadeoServicesGlobal::isCheckingRoom);
-					if (UI::Button("Check Room")) {
-						startnew(MXNadeoServicesGlobal::CheckNadeoRoomAsync);
-					}
-					UI::EndDisabled();
-					if (MXNadeoServicesGlobal::isCheckingRoom) {
-						int HourGlassValue = Time::Stamp % 3;
-						string Hourglass = (HourGlassValue == 0 ? Icons::HourglassStart : (HourGlassValue == 1 ? Icons::HourglassHalf : Icons::HourglassEnd));
-						UI::TextDisabled(Hourglass + " Checking...");
-					}
-					if (MXNadeoServicesGlobal::foundRoom !is null) {
-						RMT_isServerOK = true;
-						UI::Text("Room found:");
-						UI::Text("'"+ColoredString(MXNadeoServicesGlobal::foundRoom.name)+"', in club '"+ColoredString(MXNadeoServicesGlobal::foundRoom.clubName)+"'");
-					}
-				}
-				if (RMT_isServerOK && !TM::IsInServer()) {
-					UI::BeginDisabled();
-					UI::GreyButton(Icons::Users + " Start Random Map Together");
-					UI::Text("\\$a50" + Icons::ExclamationTriangle + " \\$zPlease join the room before continuing");
-					UI::EndDisabled();
-				}
-				if (RMT_isServerOK && TM::IsInServer() && UI::GreenButton(Icons::Users + " Start Random Map Together")){
-					selectedGameMode = GameMode::Together;
-					startnew(CoroutineFunc(Together.StartRMT));
-				}
-				if (RMT_isServerOK && TM::IsInServer() && UI::GreenButton(Icons::Heart + " Start RMT Survival")){
-					selectedGameMode = GameMode::TogetherSurvival;
-					startnew(CoroutineFunc(TogetherSurvival.StartRMTS));
-				}
+                if (PluginSettings::RMC_Together_ClubId > 0 && PluginSettings::RMC_Together_RoomId > 0) {
+                    UI::BeginDisabled(MXNadeoServicesGlobal::isCheckingRoom);
+                    if (UI::Button("Check Room")) {
+                        startnew(MXNadeoServicesGlobal::CheckNadeoRoomAsync);
+                    }
+                    UI::EndDisabled();
+                    if (MXNadeoServicesGlobal::isCheckingRoom) {
+                        int HourGlassValue = Time::Stamp % 3;
+                        string Hourglass = (HourGlassValue == 0 ? Icons::HourglassStart : (HourGlassValue == 1 ? Icons::HourglassHalf : Icons::HourglassEnd));
+                        UI::TextDisabled(Hourglass + " Checking...");
+                    }
+                    if (MXNadeoServicesGlobal::foundRoom !is null) {
+                        RMT_isServerOK = true;
+                        UI::Text("Room found:");
+                        UI::Text("'"+ColoredString(MXNadeoServicesGlobal::foundRoom.name)+"', in club '"+ColoredString(MXNadeoServicesGlobal::foundRoom.clubName)+"'");
+                    }
+                }
+                if (RMT_isServerOK && !TM::IsInServer()) {
+                    UI::BeginDisabled();
+                    UI::GreyButton(Icons::Users + " Start Random Map Together");
+                    UI::Text("\\$a50" + Icons::ExclamationTriangle + " \\$zPlease join the room before continuing");
+                    UI::EndDisabled();
+                }
+                if (RMT_isServerOK && TM::IsInServer() && UI::GreenButton(Icons::Users + " Start Random Map Together")){
+                    selectedGameMode = GameMode::Together;
+                    startnew(CoroutineFunc(Together.StartRMT));
+                }
+                if (RMT_isServerOK && TM::IsInServer() && UI::GreenButton(Icons::Heart + " Start RMT Survival")){
+                    selectedGameMode = GameMode::TogetherSurvival;
+                    startnew(CoroutineFunc(TogetherSurvival.StartRMTS));
+                }
 #endif
                 UI::TreePop();
             }

@@ -44,18 +44,18 @@ class RMS : RMC
     }
 
     int RunEndTimestamp() override { 
-		int InitialLimit = RMC::ContinueSavedRun ? TimeLimit() - RMC::LoadedRemainingTime : TimeLimit();
-		int MaxTime = TimeLimit() - (Skips * 60 * 1000);
-		int BonusTime = (GoalTimerIncrease * RMC::GoalMedalCount) - OverflowAdjustmentTime;
-		int FinalTimestamp = RMC::RunStartTimestamp + InitialLimit + RMC::TimePaused + BonusTime;
-		int OverflowTime = Time::Now + MaxTime;
-		if (FinalTimestamp > OverflowTime) {
-			OverflowAdjustmentTime += FinalTimestamp - OverflowTime;
-			BonusTime = (GoalTimerIncrease * RMC::GoalMedalCount) - OverflowAdjustmentTime;
-			FinalTimestamp = RMC::RunStartTimestamp + InitialLimit + RMC::TimePaused + BonusTime;
-		} 
-		return FinalTimestamp;
-	}
+        int InitialLimit = RMC::ContinueSavedRun ? TimeLimit() - RMC::LoadedRemainingTime : TimeLimit();
+        int MaxTime = TimeLimit() - (Skips * 60 * 1000);
+        int BonusTime = (GoalTimerIncrease * RMC::GoalMedalCount) - OverflowAdjustmentTime;
+        int FinalTimestamp = RMC::RunStartTimestamp + InitialLimit + RMC::TimePaused + BonusTime;
+        int OverflowTime = Time::Now + MaxTime;
+        if (FinalTimestamp > OverflowTime) {
+            OverflowAdjustmentTime += FinalTimestamp - OverflowTime;
+            BonusTime = (GoalTimerIncrease * RMC::GoalMedalCount) - OverflowAdjustmentTime;
+            FinalTimestamp = RMC::RunStartTimestamp + InitialLimit + RMC::TimePaused + BonusTime;
+        } 
+        return FinalTimestamp;
+    }
 
     void RenderBelowGoalMedal() override
     {
@@ -119,40 +119,40 @@ class RMS : RMC
         }
     }
 
-	void SkipButtons() override {
-		UI::BeginDisabled(TM::IsPauseMenuDisplayed() || RMC::ClickedOnSkip);
-		if (UI::Button(Icons::PlayCircleO + " Skip")) {
-			RMC::PauseRun();
-			RMC::ClickedOnSkip = true;
-			Skips += 1;
-			Log::Trace(GetModeNameShort()+": Skipping map");
-			UI::ShowNotification("Please wait...");
-			startnew(RMC::SwitchMap);
-		}
+    void SkipButtons() override {
+        UI::BeginDisabled(TM::IsPauseMenuDisplayed() || RMC::ClickedOnSkip);
+        if (UI::Button(Icons::PlayCircleO + " Skip")) {
+            RMC::PauseRun();
+            RMC::ClickedOnSkip = true;
+            Skips += 1;
+            Log::Trace(GetModeNameShort()+": Skipping map");
+            UI::ShowNotification("Please wait...");
+            startnew(RMC::SwitchMap);
+        }
 
-		if (UI::OrangeButton(Icons::PlayCircleO + " Skip Broken Map")) {
-			RMC::PauseRun();
-			if (!UI::IsOverlayShown()) UI::ShowOverlay();
-			Renderables::Add(BrokenMapSkipWarnModalDialog());
-		}
+        if (UI::OrangeButton(Icons::PlayCircleO + " Skip Broken Map")) {
+            RMC::PauseRun();
+            if (!UI::IsOverlayShown()) UI::ShowOverlay();
+            Renderables::Add(BrokenMapSkipWarnModalDialog());
+        }
 
-		if (TM::IsPauseMenuDisplayed()) UI::SetPreviousTooltip("To skip the map, please exit the pause menu.");
-		UI::EndDisabled();
-	}
+        if (TM::IsPauseMenuDisplayed()) UI::SetPreviousTooltip("To skip the map, please exit the pause menu.");
+        UI::EndDisabled();
+    }
 
-	void ResetValues() override {
-		RMC::ResetValues();
-		Skips = 0;
-		LoadedSurvivedTime = 0;
-		OverflowAdjustmentTime = 0;
-	}
+    void ResetValues() override {
+        RMC::ResetValues();
+        Skips = 0;
+        LoadedSurvivedTime = 0;
+        OverflowAdjustmentTime = 0;
+    }
 
-	void LoadSavedState() override {
-		RMC::LoadSavedState();
-		// TODO(80Ltrumpet): These are completely wrong (see `RMC::LoadSavedState`).
-		Skips = RMC::CurrentRunData["SecondaryCounterValue"];
-		LoadedSurvivedTime = RMC::CurrentRunData["CurrentRunTime"];
-	}
+    void LoadSavedState() override {
+        RMC::LoadSavedState();
+        // TODO(80Ltrumpet): These are completely wrong (see `RMC::LoadSavedState`).
+        Skips = RMC::CurrentRunData["SecondaryCounterValue"];
+        LoadedSurvivedTime = RMC::CurrentRunData["CurrentRunTime"];
+    }
 
     void GameEndNotification() override
     {
