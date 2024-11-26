@@ -159,6 +159,7 @@ namespace RMC
                 if (RMT_isServerOK && !TM::IsInServer()) {
                     UI::BeginDisabled();
                     UI::GreyButton(Icons::Users + " Start Random Map Together");
+                    UI::GreyButton(Icons::Heart + " Start RMT Survival");
                     UI::Text("\\$a50" + Icons::ExclamationTriangle + " \\$zPlease join the room before continuing");
                     UI::EndDisabled();
                 }
@@ -234,6 +235,7 @@ namespace RMC
                 UI::SetCursorPos(vec2(pos_orig.x, pos_orig.y+60));
                 Together.RenderScores();
             }
+            // Need some TogetherSurvival logic here
 #endif
         }
     }
@@ -244,6 +246,7 @@ namespace RMC
         else if (selectedGameMode == GameMode::Survival || selectedGameMode == GameMode::SurvivalChaos) Survival.Render();
         else if (selectedGameMode == GameMode::Objective) Objective.Render();
         else if (selectedGameMode == GameMode::Together) Together.Render();
+        else if (selectedGameMode == GameMode::TogetherSurvival) TogetherSurvival.Render();
     }
 
     void RenderBaseInfos()

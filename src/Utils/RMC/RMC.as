@@ -28,16 +28,6 @@ class RMC
         return day + "-" + month + "-" + year;
     }
 
-    int RunRemainingTime() {
-        if (!RMC::IsPaused) LastUpdatedRemainingTime = RunEndTimestamp() - Time::Now; 
-        return LastUpdatedRemainingTime;
-    }
-
-    int RunEndTimestamp() { 
-        int InitialLimit = RMC::ContinueSavedRun ? RMC::LoadedRemainingTime : TimeLimit();
-        return RMC::RunStartTimestamp + RMC::TimePaused + InitialLimit; 
-    }
-
     void Render()
     {
         if (RMC::IsRunning && (UI::IsOverlayShown() || PluginSettings::RMC_AlwaysShowBtns)) 
@@ -83,14 +73,6 @@ class RMC
         }
     }
 
-    void RenderCustomSearchWarning() {
-        if ((RMC::IsRunning || RMC::IsStarting) && PluginSettings::CustomRules) {
-            UI::Separator();
-            UI::Text("\\$fc0"+ Icons::ExclamationTriangle + " \\$zInvalid for official leaderboards ");
-            UI::SetPreviousTooltip("This run has custom search parameters enabled, meaning that you only get maps after the settings you configured. \nTo change this, toggle the \"Use these parameters in RMC\" under the \"Searching\" settings");
-        }
-    }
-
     void RenderTimer()
     {
         UI::PushFont(TimerFont);
@@ -119,7 +101,7 @@ class RMC
     void RenderStopButton() {
         if (UI::RedButton(Icons::Times + " Stop " + GetModeNameShort())) {
             RMC::UserEndedRun = true;
-            RMC::EndTimeCopyForSaveData = RunEndTimestamp();
+            RMC::EndTimeCopyForSaveData = RMC::EndTime;
             RMC::StartTimeCopyForSaveData = RMC::StartTime;
             RMC::IsRunning = false;
             RMC::ShowTimer = false;
@@ -381,8 +363,8 @@ class RMC
 
     void ResetValues() {
         BelowMedalCount = 0;
-        FreeSkipsUsed = 0;
-        UserEndedRun = false;
+        RMC::FreeSkipsUsed = 0;
+        RMC::UserEndedRun = false;
     }
 
     void GameEndNotification()

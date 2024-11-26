@@ -43,20 +43,6 @@ class RMS : RMC
         UI::PopFont();
     }
 
-    int RunEndTimestamp() override { 
-        int InitialLimit = RMC::ContinueSavedRun ? TimeLimit() - RMC::LoadedRemainingTime : TimeLimit();
-        int MaxTime = TimeLimit() - (Skips * 60 * 1000);
-        int BonusTime = (GoalTimerIncrease * RMC::GoalMedalCount) - OverflowAdjustmentTime;
-        int FinalTimestamp = RMC::RunStartTimestamp + InitialLimit + RMC::TimePaused + BonusTime;
-        int OverflowTime = Time::Now + MaxTime;
-        if (FinalTimestamp > OverflowTime) {
-            OverflowAdjustmentTime += FinalTimestamp - OverflowTime;
-            BonusTime = (GoalTimerIncrease * RMC::GoalMedalCount) - OverflowAdjustmentTime;
-            FinalTimestamp = RMC::RunStartTimestamp + InitialLimit + RMC::TimePaused + BonusTime;
-        } 
-        return FinalTimestamp;
-    }
-
     void RenderBelowGoalMedal() override
     {
         UI::Image(SkipTex, vec2(PluginSettings::RMC_ImageSize*2,PluginSettings::RMC_ImageSize*2));
@@ -119,7 +105,7 @@ class RMS : RMC
         }
     }
 
-    void SkipButtons() override {
+/*    void SkipButtons() override {
         UI::BeginDisabled(TM::IsPauseMenuDisplayed() || RMC::ClickedOnSkip);
         if (UI::Button(Icons::PlayCircleO + " Skip")) {
             RMC::PauseRun();
@@ -138,21 +124,19 @@ class RMS : RMC
 
         if (TM::IsPauseMenuDisplayed()) UI::SetPreviousTooltip("To skip the map, please exit the pause menu.");
         UI::EndDisabled();
-    }
+    }*/
 
     void ResetValues() override {
         RMC::ResetValues();
         Skips = 0;
-        LoadedSurvivedTime = 0;
-        OverflowAdjustmentTime = 0;
     }
 
-    void LoadSavedState() override {
+/*    void LoadSavedState() override {
         RMC::LoadSavedState();
         // TODO(80Ltrumpet): These are completely wrong (see `RMC::LoadSavedState`).
         Skips = RMC::CurrentRunData["SecondaryCounterValue"];
         LoadedSurvivedTime = RMC::CurrentRunData["CurrentRunTime"];
-    }
+    }*/
 
     void GameEndNotification() override
     {
