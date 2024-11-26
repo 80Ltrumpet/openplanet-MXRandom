@@ -159,7 +159,7 @@ namespace RMC
                 if (RMT_isServerOK && !TM::IsInServer()) {
                     UI::BeginDisabled();
                     UI::GreyButton(Icons::Users + " Start Random Map Together");
-                    UI::GreyButton(Icons::Heart + " Start RMT Survival");
+                    UI::GreyButton(Icons::Scuttlebutt + " Start RMS Together");
                     UI::Text("\\$a50" + Icons::ExclamationTriangle + " \\$zPlease join the room before continuing");
                     UI::EndDisabled();
                 }
@@ -167,9 +167,9 @@ namespace RMC
                     selectedGameMode = GameMode::Together;
                     startnew(CoroutineFunc(Together.StartRMT));
                 }
-                if (RMT_isServerOK && TM::IsInServer() && UI::GreenButton(Icons::Heart + " Start RMT Survival")){
-                    selectedGameMode = GameMode::TogetherSurvival;
-                    startnew(CoroutineFunc(TogetherSurvival.StartRMTS));
+                if (RMT_isServerOK && TM::IsInServer() && UI::GreenButton(Icons::Scuttlebutt + " Start RMS Together")){
+                    selectedGameMode = GameMode::SurvivalTogether;
+                    startnew(CoroutineFunc(SurvivalTogether.StartRMST));
                 }
 #endif
                 UI::TreePop();
@@ -235,7 +235,7 @@ namespace RMC
                 UI::SetCursorPos(vec2(pos_orig.x, pos_orig.y+60));
                 Together.RenderScores();
             }
-            // Need some TogetherSurvival logic here
+            // Need some SurvivalTogether logic here
 #endif
         }
     }
@@ -246,7 +246,7 @@ namespace RMC
         else if (selectedGameMode == GameMode::Survival || selectedGameMode == GameMode::SurvivalChaos) Survival.Render();
         else if (selectedGameMode == GameMode::Objective) Objective.Render();
         else if (selectedGameMode == GameMode::Together) Together.Render();
-        else if (selectedGameMode == GameMode::TogetherSurvival) TogetherSurvival.Render();
+        else if (selectedGameMode == GameMode::SurvivalTogether) SurvivalTogether.Render();
     }
 
     void RenderBaseInfos()

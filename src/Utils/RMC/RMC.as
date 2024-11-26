@@ -361,12 +361,6 @@ class RMC
         startnew(CoroutineFunc(TimerYield));
     }
 
-    void ResetValues() {
-        BelowMedalCount = 0;
-        RMC::FreeSkipsUsed = 0;
-        RMC::UserEndedRun = false;
-    }
-
     void GameEndNotification()
     {
         if (RMC::selectedGameMode == RMC::GameMode::Challenge) {
