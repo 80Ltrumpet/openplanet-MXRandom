@@ -16,6 +16,7 @@ class RMC
     }
 
     string GetModeName() { return "Random Map Challenge";}
+    string GetModeNameShort() { return tostring(RMC::selectedGameMode); }
 
     int TimeLimit() { return PluginSettings::RMC_Duration * 60 * 1000; }
 
@@ -27,43 +28,20 @@ class RMC
         return day + "-" + month + "-" + year;
     }
 
+    int RunRemainingTime() {
+		if (!RMC::IsPaused) LastUpdatedRemainingTime = RunEndTimestamp() - Time::Now; 
+		return LastUpdatedRemainingTime;
+	}
+
+    int RunEndTimestamp() { 
+		int InitialLimit = RMC::ContinueSavedRun ? RMC::LoadedRemainingTime : TimeLimit();
+		return RMC::RunStartTimestamp + RMC::TimePaused + InitialLimit; 
+	}
+
     void Render()
     {
-        string lastLetter = tostring(RMC::selectedGameMode).SubStr(0,1);
-        if (RMC::IsRunning && (UI::IsOverlayShown() || (!UI::IsOverlayShown() && PluginSettings::RMC_AlwaysShowBtns))) {
-            if (UI::RedButton(Icons::Times + " Stop RM"+lastLetter))
-            {
-                RMC::UserEndedRun = true;
-                RMC::EndTimeCopyForSaveData = RMC::EndTime;
-                RMC::StartTimeCopyForSaveData = RMC::StartTime;
-                RMC::IsRunning = false;
-                RMC::ShowTimer = false;
-                RMC::StartTime = -1;
-                RMC::EndTime = -1;
-                @MX::preloadedMap = null;
-
-#if DEPENDENCY_CHAOSMODE
-                ChaosMode::SetRMCMode(false);
-#endif
-                int secondaryCount = RMC::selectedGameMode == RMC::GameMode::Challenge ? BelowMedalCount : RMC::Survival.Skips;
-                if (RMC::GoalMedalCount != 0 || secondaryCount != 0 || RMC::GotBelowMedalOnCurrentMap || RMC::GotGoalMedalOnCurrentMap) {
-                    if (!PluginSettings::RMC_RUN_AUTOSAVE) {
-                        Renderables::Add(SaveRunQuestionModalDialog());
-                        // sleeping here to wait for the dialog to be closed crashes the plugin, hence we just have a copy
-                        // of the timers to use for the save file
-                    } else {
-                        RMC::CreateSave(true);
-                        vec4 color = UI::HSV(0.25, 1, 0.7);
-                        UI::ShowNotification(PLUGIN_NAME, "Saved the state of the current run", color, 5000);
-                    }
-                } else {
-                    // no saves for instant resets
-                    DataManager::RemoveCurrentSaveFile();
-                }
-            }
-
-            UI::Separator();
-        }
+        if (RMC::IsRunning && (UI::IsOverlayShown() || PluginSettings::RMC_AlwaysShowBtns)) 
+			RenderStopButton();
 
         RenderTimer();
         if (IS_DEV_MODE) UI::Text(RMC::FormatTimer(RMC::StartTime - ModeStartTimestamp));
@@ -98,6 +76,14 @@ class RMC
     }
 
     void RenderCustomSearchWarning() {
+		if ((RMC::IsRunning || RMC::IsStarting) && PluginSettings::CustomRules) {
+			UI::Separator();
+			UI::Text("\\$fc0"+ Icons::ExclamationTriangle + " \\$zInvalid for official leaderboards ");
+			UI::SetPreviousTooltip("This run has custom search parameters enabled, meaning that you only get maps after the settings you configured. \nTo change this, toggle the \"Use these parameters in RMC\" under the \"Searching\" settings");
+		}
+	}
+
+    void RenderCustomSearchWarning() {
         if ((RMC::IsRunning || RMC::IsStarting) && PluginSettings::CustomRules) {
             UI::Separator();
             UI::Text("\\$fc0"+ Icons::ExclamationTriangle + " \\$zInvalid for official leaderboards ");
@@ -128,6 +114,40 @@ class RMC
                 else UI::Text("Timer running");
             } else UI::Text("Timer ended");
         }
+    }
+
+    void RenderStopButton() {
+		if (UI::RedButton(Icons::Times + " Stop " + GetModeNameShort())) {
+            RMC::UserEndedRun = true;
+            RMC::EndTimeCopyForSaveData = RunEndTimestamp();
+            RMC::StartTimeCopyForSaveData = RMC::StartTime;
+            RMC::IsRunning = false;
+            RMC::ShowTimer = false;
+            RMC::StartTime = -1;
+            RMC::EndTime = -1;
+            @MX::preloadedMap = null;
+
+#if DEPENDENCY_CHAOSMODE
+            ChaosMode::SetRMCMode(false);
+#endif
+            int secondaryCount = RMC::selectedGameMode == RMC::GameMode::Challenge ? BelowMedalCount : RMC::Survival.Skips;
+            if (RMC::GoalMedalCount != 0 || secondaryCount != 0 || RMC::GotBelowMedalOnCurrentMap || RMC::GotGoalMedalOnCurrentMap) {
+                if (!PluginSettings::RMC_RUN_AUTOSAVE) {
+                    Renderables::Add(SaveRunQuestionModalDialog());
+                    // sleeping here to wait for the dialog to be closed crashes the plugin, hence we just have a copy
+                    // of the timers to use for the save file
+                } else {
+                    RMC::CreateSave(true);
+                    vec4 color = UI::HSV(0.25, 1, 0.7);
+                    UI::ShowNotification(PLUGIN_NAME, "Saved the state of the current run", color, 5000);
+                }
+            } else {
+                // no saves for instant resets
+                DataManager::RemoveCurrentSaveFile();
+            }
+        }
+
+        UI::Separator();
     }
 
     void RenderGoalMedal()
@@ -348,7 +368,6 @@ class RMC
         RMC::EndTime = !RMC::ContinueSavedRun ? RMC::StartTime + TimeLimit() : RMC::StartTime + int(RMC::CurrentRunData["TimerRemaining"]);
         if (RMC::ContinueSavedRun) {
             ModeStartTimestamp = RMC::StartTime - (Time::Now - int(RMC::CurrentRunData["CurrentRunTime"]));
-
         } else {
             ModeStartTimestamp = Time::get_Now();
         }
@@ -359,6 +378,12 @@ class RMC
         if (RMC::GotGoalMedalOnCurrentMap) GotGoalMedalNotification();
         startnew(CoroutineFunc(TimerYield));
     }
+
+	void ResetValues() {
+		BelowMedalCount = 0;
+		FreeSkipsUsed = 0;
+		UserEndedRun = false;
+	}
 
     void GameEndNotification()
     {
