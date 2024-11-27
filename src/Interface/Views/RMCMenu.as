@@ -197,7 +197,8 @@ namespace RMC
             RMC::GoalMedalCount > 0 ||
             Challenge.BelowMedalCount > 0 ||
             Survival.Skips > 0 ||
-            Survival.SurvivedTime > 0
+            Survival.SurvivedTime > 0 ||
+            SurvivalTogether.SurvivedTime > 0
         ) {
             if (!UI::IsOverlayShown()) UI::Dummy(vec2(0, 10));
             UI::Separator();
