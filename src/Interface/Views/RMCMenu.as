@@ -235,7 +235,14 @@ namespace RMC
                 UI::SetCursorPos(vec2(pos_orig.x, pos_orig.y+60));
                 Together.RenderScores();
             }
-            // Need some SurvivalTogether logic here
+            else if (selectedGameMode == GameMode::SurvivalTogether) {
+                SurvivalTogether.RenderGoalMedal();
+                UI::SetCursorPos(vec2(UI::GetCursorPos().x+50, UI::GetCursorPos().y));
+                SurvivalTogether.RenderBelowGoalMedal();
+                UI::SetCursorPos(vec2(pos_orig.x, pos_orig.y+60));
+                UI::Text("Survived time: " + RMC::FormatTimer(SurvivalTogether.SurvivedTime));
+                SurvivalTogether.RenderScores();
+            }
 #endif
         }
     }
