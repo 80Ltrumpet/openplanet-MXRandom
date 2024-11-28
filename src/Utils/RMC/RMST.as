@@ -260,31 +260,7 @@ class RMST : RMS {
                 }
 
                 if (isObjectiveCompleted() && !RMC::GotGoalMedalOnCurrentMap) {
-                    Log::Log(
-                        playerGotGoalActualMap.name + " got goal medal with a time of "
-                            + playerGotGoalActualMap.time
-                    );
-                    UI::ShowNotification(
-                        Icons::Trophy + " " + playerGotGoalActualMap.name + " got "
-                            + tostring(PluginSettings::RMC_GoalMedal) + " medal with a time of "
-                            + playerGotGoalActualMap.timeStr,
-                        "Switching map...",
-                        Text::ParseHexColor("#01660f")
-                    );
-                    RMC::GoalMedalCount += 1;
-                    RMC::GotGoalMedalOnCurrentMap = true;
-                    RMTPlayerScore@ playerScored = findOrCreatePlayerScore(playerGotGoalActualMap);
-                    playerScored.AddGoal();
-                    m_playerScores.SortDesc();
-
-                    BetterChatSendMessage(
-                        Icons::Trophy + " " + playerGotGoalActualMap.name + " got "
-                            + tostring(PluginSettings::RMC_GoalMedal) + " medal with a time of "
-                            + playerGotGoalActualMap.timeStr
-                    );
-                    BetterChatSendMessage(Icons::Scuttlebutt + " Switching map...");
-
-                    RMTSwitchMap();
+                    GotGoalMedalNotification();
                 }
 
                 if (isBelowObjectiveCompleted()
@@ -319,6 +295,36 @@ class RMST : RMS {
         }
     }
 
+    void GotGoalMedalNotification() override
+    {
+        Log::Log(
+            playerGotGoalActualMap.name + " got goal medal with a time of "
+                + playerGotGoalActualMap.time
+        );
+        UI::ShowNotification(
+            Icons::Trophy + " " + playerGotGoalActualMap.name + " got "
+                + tostring(PluginSettings::RMC_GoalMedal) + " medal with a time of "
+                + playerGotGoalActualMap.timeStr,
+            "Switching map...",
+            Text::ParseHexColor("#01660f")
+        );
+        RMC::GoalMedalCount += 1;
+        RMC::GotGoalMedalOnCurrentMap = true;
+        RMC::EndTime += (3*60*1000);
+        RMTPlayerScore@ playerScored = findOrCreatePlayerScore(playerGotGoalActualMap);
+        playerScored.AddGoal();
+        m_playerScores.SortDesc();
+
+        BetterChatSendMessage(
+            Icons::Trophy + " " + playerGotGoalActualMap.name + " got "
+                + tostring(PluginSettings::RMC_GoalMedal) + " medal with a time of "
+                + playerGotGoalActualMap.timeStr
+        );
+        BetterChatSendMessage(Icons::Scuttlebutt + " Switching map...");
+
+        RMTSwitchMap();
+    }
+
     void RenderMVPPlayer() {
         if (m_playerScores.Length > 0) {
             RMTPlayerScore@ p = m_playerScores[0];
@@ -329,7 +335,7 @@ class RMST : RMS {
     // If BetterChat is not installed, this is a no-op.
     private void BetterChatSendMessage(const string &in message) {
 #if DEPENDENCY_BETTERCHAT
-        //sleep(200);
+        sleep(200);
         BetterChat::SendChatMessage(message);
 #endif
     }
@@ -337,7 +343,7 @@ class RMST : RMS {
     // If BetterChat is not installed, this is a no-op.
     private void BetterChatSendLeaderboard() {
 #if DEPENDENCY_BETTERCHAT
-        //sleep(200);
+        sleep(200);
         if (m_playerScores.Length > 0) {
             string currentStatsChat = Icons::Scuttlebutt + " " + GetModeNameShort() + " Leaderboard: " + tostring(RMC::GoalMedalCount) + " " + tostring(PluginSettings::RMC_GoalMedal) + " medals" + (PluginSettings::RMC_GoalMedal != RMC::Medals[0] ? " - " + BelowMedalCount + " " + RMC::Medals[RMC::Medals.Find(PluginSettings::RMC_GoalMedal)-1] + " medals" : "") + "\n\n";
             for (uint i = 0; i < m_playerScores.Length; i++) {
@@ -450,7 +456,7 @@ class RMST : RMS {
             UI::ShowNotification("Please wait...");
             RMC::EndTime += RMC::TimeSpentMap;
             Log::Trace(GetModeNameShort() + ": Skipping broken map");
-            BetterChatSendMessage(Icons::Scuttlebutt + " Skipping broken map...");
+            BetterChat::SendChatMessage(Icons::Scuttlebutt + " Skipping broken map...");
             startnew(CoroutineFunc(RMTSwitchMap));
         }
     }
