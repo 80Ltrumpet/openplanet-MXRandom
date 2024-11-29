@@ -22,6 +22,9 @@ class RMST : RMS {
             RMC::EndTimeCopyForSaveData = RMC::EndTime;
             RMC::StartTimeCopyForSaveData = RMC::StartTime;
             RMC::IsRunning = false;
+            RMC::ShowTimer = false;
+            RMC::StartTime = -1;
+            RMC::EndTime = -1;
             @nextMap = null;
             @MX::preloadedMap = null;
             BetterChatSendMessage(Icons::Scuttlebutt + " " + GetModeName() + " stopped");
@@ -33,13 +36,11 @@ class RMST : RMS {
     }
 
     void Render() override {
-        if (UI::IsOverlayShown() || PluginSettings::RMC_AlwaysShowBtns) {
+        if (RMC::IsRunning && (UI::IsOverlayShown() || PluginSettings::RMC_AlwaysShowBtns)) {
             RenderStopButton();
         }
 
         RenderTimer();
-
-        // NOTE(80Ltrumpet): Debug rendering has been removed.
 
         UI::Separator();
         vec2 pos_orig = UI::GetCursorPos();
@@ -84,6 +85,7 @@ class RMST : RMS {
         RMC::ClickedOnSkip = false;
         RMC::ContinueSavedRun = false;
         RMC::HasCompletedCheckbox = false;
+        RMC::UserEndedRun = false;
 
         RMC::IsInited = true;
 
@@ -202,34 +204,13 @@ class RMST : RMS {
         startnew(CoroutineFunc(RMTFetchNextMap));
     }
 
-    bool CheckMapValidity() {
-        if (!MXNadeoServicesGlobal::CheckIfMapExistsAsync(currentMap.TrackUID)) {
-            Log::Trace(GetModeNameShort() + ": Map is not on NadeoServices, retrying...");
-            return false;
-        }
-        return true;
-    }
-
-    void SetServerMap() {
-        Log::Trace(GetModeNameShort() + ": Random map: " + currentMap.Name + " (" + currentMap.TrackID + ")");
-        UI::ShowNotification(
-            Icons::InfoCircle + " " + GetModeNameShort() + " - Information on map switching",
-            "Nadeo prevent sometimes when switching map too often and will not change map.\n"
-                "If after 10 seconds the podium screen is not shown, you can start a vote to "
-                "change to next map in the game pause menu.",
-            Text::ParseHexColor("#991703")
-        );
-        DataManager::SaveMapToRecentlyPlayed(currentMap);
-        MXNadeoServicesGlobal::ClubRoomSetMapAndSwitchAsync(RMTRoom, currentMap.TrackUID);
-    }
-
     void ResetToLobbyMap() {
         if (LobbyMapUID != "") {
             UI::ShowNotification("Returning to lobby map", "Please wait...", Text::ParseHexColor("#993f03"));
             BetterChatSendMessage(Icons::Scuttlebutt + " Returning to lobby map...");
             MXNadeoServicesGlobal::SetMapToClubRoomAsync(RMTRoom, LobbyMapUID);
             if (RMC::UserEndedRun) MXNadeoServicesGlobal::ClubRoomSwitchMapAsync(RMTRoom);
-            while (!TM::IsMapCorrect(LobbyMapUID)) sleep(500);
+            while (!TM::IsMapCorrect(LobbyMapUID)) sleep(1000);
             RMC::UserEndedRun = false;
         }
         MXNadeoServicesGlobal::ClubRoomSetCountdownTimer(RMTRoom, 0);
@@ -238,66 +219,65 @@ class RMST : RMS {
     void TimerYield() override {
         while (RMC::IsRunning){
             yield();
-            if (!RMC::IsPaused) {
-                CGameCtnChallenge@ currentMapChallenge = cast<CGameCtnChallenge>(GetApp().RootMap);
-                if (currentMapChallenge !is null) {
-                    CGameCtnChallengeInfo@ currentMapInfo = currentMapChallenge.MapInfo;
-                    if (currentMapInfo !is null) {
-                        RMC::StartTime = Time::Now;
-                        RMC::TimeSpentMap = Time::Now - RMC::TimeSpawnedMap;
-                        PendingTimerLoop();
-                        if (!RMC::IsRunning || (RMC::EndTime - Time::Now) < 1) {
-                            RMC::StartTime = -1;
-                            RMC::EndTime = -1;
-                            RMC::IsRunning = false;
-                            RMC::ShowTimer = false;
-                            GameEndNotification();
-                            @nextMap = null;
-                            @MX::preloadedMap = null;
-                            m_playerScores.SortDesc();
+            if (RMC::IsPaused) continue;
+            CGameCtnChallenge@ currentMapChallenge = cast<CGameCtnChallenge>(GetApp().RootMap);
+            if (currentMapChallenge !is null) {
+                CGameCtnChallengeInfo@ currentMapInfo = currentMapChallenge.MapInfo;
+                if (currentMapInfo !is null) {
+                    RMC::StartTime = Time::Now;
+                    RMC::TimeSpentMap = Time::Now - RMC::TimeSpawnedMap;
+                    PendingTimerLoop();
+                    if (!RMC::IsRunning || (RMC::EndTime - Time::Now) < 1) {
+                        RMC::StartTime = -1;
+                        RMC::EndTime = -1;
+                        RMC::IsRunning = false;
+                        RMC::ShowTimer = false;
+                        GameEndNotification();
+                        @nextMap = null;
+                        @MX::preloadedMap = null;
+                        m_playerScores.SortDesc();
 #if DEPENDENCY_BETTERCHAT
-                            BetterChat::SendChatMessage(Icons::Scuttlebutt + " RMS Together ended, thanks for playing!");
-                            sleep(200);
-                            BetterChatSendLeaderboard();
+                        BetterChat::SendChatMessage(Icons::Scuttlebutt + " RMS Together ended, thanks for playing!");
+                        sleep(200);
+                        BetterChatSendLeaderboard();
 #endif
 
-                            ResetToLobbyMap();
-                        }
+                        ResetToLobbyMap();
                     }
                 }
+            }
 
-                if (isObjectiveCompleted() && !RMC::GotGoalMedalOnCurrentMap) {
-                    GotGoalMedalNotification();
-                }
+            if (isObjectiveCompleted() && !RMC::GotGoalMedalOnCurrentMap) {
+                GotGoalMedalNotification();
+            }
 
-                if (isBelowObjectiveCompleted()
-                    && !RMC::GotBelowMedalOnCurrentMap
-                    && PluginSettings::RMC_GoalMedal != RMC::Medals[0]
-                ) {
-                    Log::Log(
-                        playerGotBelowGoalActualMap.name + " got below goal medal with a time of "
-                            + playerGotBelowGoalActualMap.time
-                    );
-                    UI::ShowNotification(
-                        Icons::Trophy + " " + playerGotBelowGoalActualMap.name + " got "
-                            + RMC::Medals[RMC::Medals.Find(PluginSettings::RMC_GoalMedal)-1]
-                            + " medal with a time of " + playerGotBelowGoalActualMap.timeStr,
-                        "You can skip and take "
-                            + RMC::Medals[RMC::Medals.Find(PluginSettings::RMC_GoalMedal)-1]
-                            + " medal",
-                        Text::ParseHexColor("#4d3e0a")
-                    );
-                    RMC::GotBelowMedalOnCurrentMap = true;
-                    BetterChatSendMessage(
-                        Icons::Trophy + " " + playerGotBelowGoalActualMap.name + " got "
-                            + RMC::Medals[RMC::Medals.Find(PluginSettings::RMC_GoalMedal)-1]
-                            + " medal with a time of " + playerGotBelowGoalActualMap.timeStr
-                    );
-                    BetterChatSendMessage(
-                        Icons::Scuttlebutt + " You can skip and take "
-                            + RMC::Medals[RMC::Medals.Find(PluginSettings::RMC_GoalMedal)-1] + " medal"
-                    );
-                }
+            if (isBelowObjectiveCompleted()
+                && !RMC::GotBelowMedalOnCurrentMap
+                && PluginSettings::RMC_GoalMedal != RMC::Medals[0]
+            ) {
+                Log::Log(
+                    playerGotBelowGoalActualMap.name + " got below goal medal with a time of "
+                        + playerGotBelowGoalActualMap.time
+                );
+                UI::ShowNotification(
+                    Icons::Trophy + " " + playerGotBelowGoalActualMap.name + " got "
+                        + RMC::Medals[RMC::Medals.Find(PluginSettings::RMC_GoalMedal)-1]
+                        + " medal with a time of " + playerGotBelowGoalActualMap.timeStr,
+                    "You can skip and take "
+                        + RMC::Medals[RMC::Medals.Find(PluginSettings::RMC_GoalMedal)-1]
+                        + " medal",
+                    Text::ParseHexColor("#4d3e0a")
+                );
+                RMC::GotBelowMedalOnCurrentMap = true;
+                BetterChatSendMessage(
+                    Icons::Trophy + " " + playerGotBelowGoalActualMap.name + " got "
+                        + RMC::Medals[RMC::Medals.Find(PluginSettings::RMC_GoalMedal)-1]
+                        + " medal with a time of " + playerGotBelowGoalActualMap.timeStr
+                );
+                BetterChatSendMessage(
+                    Icons::Scuttlebutt + " You can skip and take "
+                        + RMC::Medals[RMC::Medals.Find(PluginSettings::RMC_GoalMedal)-1] + " medal"
+                );
             }
         }
     }
@@ -336,6 +316,11 @@ class RMST : RMS {
         if (m_playerScores.Length > 0) {
             RMTPlayerScore@ p = m_playerScores[0];
             UI::Text("MVP: " + p.name + " (" + p.goals + " medals)");
+            if (UI::IsItemHovered()) {
+                UI::BeginTooltip();
+                RenderScores();
+                UI::EndTooltip();
+            }
         }
     }
 
@@ -434,8 +419,8 @@ class RMST : RMS {
 
         UI::BeginDisabled(RMC::ClickedOnSkip || isSwitchingMap);
         if (UI::Button(Icons::PlayCircleO + skipLabel)) {
-            RMC::IsPaused = true;
             RMC::ClickedOnSkip = true;
+            RMC::IsPaused = false;
             if (RMC::GotBelowMedalOnCurrentMap) {
                 BelowMedalCount += 1;
                 RMTPlayerScore@ playerScore = findOrCreatePlayerScore(playerGotBelowGoalActualMap);
@@ -461,13 +446,12 @@ class RMST : RMS {
     void RenderBrokenButton() {
         if (UI::OrangeButton(Icons::PlayCircleO + "Skip broken Map")) {
             if (!UI::IsOverlayShown()) UI::ShowOverlay();
-            RMC::IsPaused = true;
             RMC::ClickedOnSkip = true;
+            RMC::IsPaused = false;
             // XXX implement an RMST version of this modal? It currently triggers SwitchMap which cause a local map switch (see BrokenMapSkipWarnModalDialog.as)
             //Renderables::Add(BrokenMapSkipWarnModalDialog());
             // Below logic is copypasted from the above commented-out function.
             RMC::EndTime = RMC::EndTime + (Time::get_Now() - RMC::StartTime);
-            RMC::IsPaused = false;
             UI::ShowNotification("Please wait...");
             RMC::EndTime += RMC::TimeSpentMap;
             Log::Trace(GetModeNameShort() + ": Skipping broken map");
