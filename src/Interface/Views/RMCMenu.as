@@ -159,12 +159,17 @@ namespace RMC
                 if (RMT_isServerOK && !TM::IsInServer()) {
                     UI::BeginDisabled();
                     UI::GreyButton(Icons::Users + " Start Random Map Together");
+                    UI::GreyButton(Icons::Scuttlebutt + " Start RMS Together");
                     UI::Text("\\$a50" + Icons::ExclamationTriangle + " \\$zPlease join the room before continuing");
                     UI::EndDisabled();
                 }
                 if (RMT_isServerOK && TM::IsInServer() && UI::GreenButton(Icons::Users + " Start Random Map Together")){
                     selectedGameMode = GameMode::Together;
                     startnew(CoroutineFunc(Together.StartRMT));
+                }
+                if (RMT_isServerOK && TM::IsInServer() && UI::GreenButton(Icons::Scuttlebutt + " Start RMS Together")){
+                    selectedGameMode = GameMode::SurvivalTogether;
+                    startnew(CoroutineFunc(SurvivalTogether.StartRMST));
                 }
 #endif
                 UI::TreePop();
@@ -192,7 +197,8 @@ namespace RMC
             RMC::GoalMedalCount > 0 ||
             Challenge.BelowMedalCount > 0 ||
             Survival.Skips > 0 ||
-            Survival.SurvivedTime > 0
+            Survival.SurvivedTime > 0 ||
+            SurvivalTogether.SurvivedTime > 0
         ) {
             if (!UI::IsOverlayShown()) UI::Dummy(vec2(0, 10));
             UI::Separator();
@@ -230,6 +236,14 @@ namespace RMC
                 UI::SetCursorPos(vec2(pos_orig.x, pos_orig.y+60));
                 Together.RenderScores();
             }
+            else if (selectedGameMode == GameMode::SurvivalTogether) {
+                SurvivalTogether.RenderGoalMedal();
+                UI::SetCursorPos(vec2(UI::GetCursorPos().x+50, UI::GetCursorPos().y));
+                SurvivalTogether.RenderBelowGoalMedal();
+                UI::SetCursorPos(vec2(pos_orig.x, pos_orig.y+60));
+                UI::Text("Survived time: " + RMC::FormatTimer(SurvivalTogether.SurvivedTime));
+                SurvivalTogether.RenderScores();
+            }
 #endif
         }
     }
@@ -240,6 +254,7 @@ namespace RMC
         else if (selectedGameMode == GameMode::Survival || selectedGameMode == GameMode::SurvivalChaos) Survival.Render();
         else if (selectedGameMode == GameMode::Objective) Objective.Render();
         else if (selectedGameMode == GameMode::Together) Together.Render();
+        else if (selectedGameMode == GameMode::SurvivalTogether) SurvivalTogether.Render();
     }
 
     void RenderBaseInfos()

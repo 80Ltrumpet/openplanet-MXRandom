@@ -51,6 +51,7 @@ namespace RMC
     RMS@ Survival;
     RMObjective@ Objective;
     RMT@ Together;
+    RMST@ SurvivalTogether;
 
     enum GameMode
     {
@@ -59,7 +60,8 @@ namespace RMC
         ChallengeChaos,
         SurvivalChaos,
         Objective,
-        Together
+        Together,
+        SurvivalTogether
     }
     GameMode selectedGameMode;
 
@@ -80,6 +82,7 @@ namespace RMC
         @Survival = RMS();
         @Objective = RMObjective();
         @Together = RMT();
+        @SurvivalTogether = RMST();
     }
 
     string FormatTimer(int time) {
