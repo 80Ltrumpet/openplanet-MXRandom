@@ -152,7 +152,13 @@ class RMST : RMS {
         @currentMap = nextMap;
         @nextMap = null;
         Log::Trace("RMT: Random map: " + currentMap.Name + " (" + currentMap.TrackID + ")");
-        UI::ShowNotification(Icons::InfoCircle + " RMT - Information on map switching", "Nadeo prevent sometimes when switching map too often and will not change map.\nIf after 10 seconds the podium screen is not shown, you can start a vote to change to next map in the game pause menu.", Text::ParseHexColor("#420399"));
+        UI::ShowNotification(
+            Icons::InfoCircle + " RMST - Regarding map switching",
+            "Nadeo sometimes prevents switching maps too often.\n" +
+                "If the podium screen is not shown after 10 seconds, " +
+                "start a vote to change to next map in the game pause menu.",
+            Text::ParseHexColor("#420399")
+        );
 
         DataManager::SaveMapToRecentlyPlayed(currentMap);
         MXNadeoServicesGlobal::ClubRoomSetMapAndSwitchAsync(RMTRoom, currentMap.TrackUID);
@@ -169,11 +175,20 @@ class RMST : RMS {
 #if DEPENDENCY_BETTERCHAT
         if (m_playerScores.Length > 0) {
             RMTPlayerScore@ p = m_playerScores[0];
-            string currentStatChat = Icons::Scuttlebutt + " RMT Leaderboard: " + tostring(RMC::GoalMedalCount) + " " + tostring(PluginSettings::RMC_GoalMedal) + " medals" + (PluginSettings::RMC_GoalMedal != RMC::Medals[0] ? " - " + BelowMedalCount + " " + RMC::Medals[RMC::Medals.Find(PluginSettings::RMC_GoalMedal)-1] + " medals" : "") + "\n";
-            currentStatChat += "Current MVP: " + p.name + ": " + p.goals + " " + tostring(PluginSettings::RMC_GoalMedal) +
-                (PluginSettings::RMC_GoalMedal != RMC::Medals[0] ?
-                    " - " + p.belowGoals + " " + RMC::Medals[RMC::Medals.Find(PluginSettings::RMC_GoalMedal)-1]
-                : "");
+            string currentStatChat = Icons::Scuttlebutt + " RMT Leaderboard: "
+                + tostring(RMC::GoalMedalCount) + " "
+                + tostring(PluginSettings::RMC_GoalMedal) + " medals";
+            if (PluginSettings::RMC_GoalMedal != RMC::Medals[0]) {
+                currentStatChat += " - " + BelowMedalCount + " "
+                    + RMC::Medals[RMC::Medals.Find(PluginSettings::RMC_GoalMedal)-1]
+                    + " medals";
+            }
+            currentStatChat += "\nCurrent MVP: " + p.name + ": " + p.goals + " "
+                + tostring(PluginSettings::RMC_GoalMedal);
+            if (PluginSettings::RMC_GoalMedal != RMC::Medals[0]) {
+                currentStatChat += " - " + p.belowGoals + " "
+                    + RMC::Medals[RMC::Medals.Find(PluginSettings::RMC_GoalMedal)-1];
+            }
             BetterChat::SendChatMessage(currentStatChat);
         }
 #endif
@@ -337,7 +352,15 @@ class RMST : RMS {
 #if DEPENDENCY_BETTERCHAT
         sleep(200);
         if (m_playerScores.Length > 0) {
-            string currentStatsChat = Icons::Scuttlebutt + " " + GetModeNameShort() + " Leaderboard: " + tostring(RMC::GoalMedalCount) + " " + tostring(PluginSettings::RMC_GoalMedal) + " medals" + (PluginSettings::RMC_GoalMedal != RMC::Medals[0] ? " - " + BelowMedalCount + " " + RMC::Medals[RMC::Medals.Find(PluginSettings::RMC_GoalMedal)-1] + " medals" : "") + "\n\n";
+            string currentStatsChat = Icons::Scuttlebutt + " " + GetModeNameShort()
+                + " Leaderboard: " + tostring(RMC::GoalMedalCount) + " "
+                + tostring(PluginSettings::RMC_GoalMedal) + " medals";
+            if (PluginSettings::RMC_GoalMedal != RMC::Medals[0]) {
+                currentStatsChat += " - " + BelowMedalCount + " "
+                    + RMC::Medals[RMC::Medals.Find(PluginSettings::RMC_GoalMedal)-1]
+                    + " medals";
+            }
+            currentStatsChat += "\n\n";
             for (uint i = 0; i < m_playerScores.Length; i++) {
                 RMTPlayerScore@ p = m_playerScores[i];
                 currentStatsChat += tostring(i+1) + ". " + p.name + ": " + p.goals + " " + tostring(PluginSettings::RMC_GoalMedal) + (PluginSettings::RMC_GoalMedal != RMC::Medals[0] ? " - " + p.belowGoals + " " + RMC::Medals[RMC::Medals.Find(PluginSettings::RMC_GoalMedal)-1] : "") + "\n";
@@ -675,6 +698,6 @@ class RMST : RMS {
         }
     }
 #else
-    string GetModeName() override { return "Random Map Survival Together (NOT SUPPORTED ON THIS GAME)";}
+    string GetModeName() override { return "Random Map Survival Together";}
 #endif
 }
