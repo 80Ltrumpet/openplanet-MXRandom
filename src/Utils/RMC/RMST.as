@@ -175,11 +175,20 @@ class RMST : RMS {
 #if DEPENDENCY_BETTERCHAT
         if (m_playerScores.Length > 0) {
             RMTPlayerScore@ p = m_playerScores[0];
-            string currentStatChat = Icons::Scuttlebutt + " RMT Leaderboard: " + tostring(RMC::GoalMedalCount) + " " + tostring(PluginSettings::RMC_GoalMedal) + " medals" + (PluginSettings::RMC_GoalMedal != RMC::Medals[0] ? " - " + BelowMedalCount + " " + RMC::Medals[RMC::Medals.Find(PluginSettings::RMC_GoalMedal)-1] + " medals" : "") + "\n";
-            currentStatChat += "Current MVP: " + p.name + ": " + p.goals + " " + tostring(PluginSettings::RMC_GoalMedal) +
-                (PluginSettings::RMC_GoalMedal != RMC::Medals[0] ?
-                    " - " + p.belowGoals + " " + RMC::Medals[RMC::Medals.Find(PluginSettings::RMC_GoalMedal)-1]
-                : "");
+            string currentStatChat = Icons::Scuttlebutt + " RMT Leaderboard: "
+                + tostring(RMC::GoalMedalCount) + " "
+                + tostring(PluginSettings::RMC_GoalMedal) + " medals";
+            if (PluginSettings::RMC_GoalMedal != RMC::Medals[0]) {
+                currentStatChat += " - " + BelowMedalCount + " "
+                    + RMC::Medals[RMC::Medals.Find(PluginSettings::RMC_GoalMedal)-1]
+                    + " medals";
+            }
+            currentStatChat += "\nCurrent MVP: " + p.name + ": " + p.goals + " "
+                + tostring(PluginSettings::RMC_GoalMedal);
+            if (PluginSettings::RMC_GoalMedal != RMC::Medals[0]) {
+                currentStatChat += " - " + p.belowGoals + " "
+                    + RMC::Medals[RMC::Medals.Find(PluginSettings::RMC_GoalMedal)-1];
+            }
             BetterChat::SendChatMessage(currentStatChat);
         }
 #endif
