@@ -152,7 +152,13 @@ class RMST : RMS {
         @currentMap = nextMap;
         @nextMap = null;
         Log::Trace("RMT: Random map: " + currentMap.Name + " (" + currentMap.TrackID + ")");
-        UI::ShowNotification(Icons::InfoCircle + " RMT - Information on map switching", "Nadeo prevent sometimes when switching map too often and will not change map.\nIf after 10 seconds the podium screen is not shown, you can start a vote to change to next map in the game pause menu.", Text::ParseHexColor("#420399"));
+        UI::ShowNotification(
+            Icons::InfoCircle + " RMST - Regarding map switching",
+            "Nadeo sometimes prevents switching maps too often.\n" +
+                "If the podium screen is not shown after 10 seconds, " +
+                "start a vote to change to next map in the game pause menu.",
+            Text::ParseHexColor("#420399")
+        );
 
         DataManager::SaveMapToRecentlyPlayed(currentMap);
         MXNadeoServicesGlobal::ClubRoomSetMapAndSwitchAsync(RMTRoom, currentMap.TrackUID);
