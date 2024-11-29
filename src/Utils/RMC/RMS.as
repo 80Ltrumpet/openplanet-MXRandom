@@ -100,8 +100,9 @@ class RMS : RMC
     void PendingTimerLoop() override
     {
         // Cap timer max
-        if ((RMC::EndTime - RMC::StartTime) > (PluginSettings::RMC_SurvivalMaxTime-Skips)*60*1000) {
-            RMC::EndTime = RMC::StartTime + (PluginSettings::RMC_SurvivalMaxTime-Skips)*60*1000;
+        const int MAX_TIME = (PluginSettings::RMC_SurvivalMaxTime - Skips) * 60 * 1000;
+        if ((RMC::EndTime - RMC::StartTime) > MAX_TIME) {
+            RMC::EndTime = RMC::StartTime + MAX_TIME;
         }
     }
 
