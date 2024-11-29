@@ -698,6 +698,6 @@ class RMST : RMS {
         }
     }
 #else
-    string GetModeName() override { return "Random Map Survival Together (NOT SUPPORTED ON THIS GAME)";}
+    string GetModeName() override { return "Random Map Survival Together";}
 #endif
 }
