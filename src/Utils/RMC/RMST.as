@@ -220,14 +220,6 @@ class RMST : RMS {
         MXNadeoServicesGlobal::ClubRoomSetCountdownTimer(RMTRoom, 0);
     }
 
-    void PendingTimerLoop() override
-    {
-        // Cap timer max
-        if ((RMC::EndTime - RMC::StartTime) > (PluginSettings::RMC_SurvivalMaxTime-RMC::SurvivalTogether.Skips)*60*1000) {
-            RMC::EndTime = RMC::StartTime + (PluginSettings::RMC_SurvivalMaxTime-RMC::SurvivalTogether.Skips)*60*1000;
-        }
-    }
-
     void TimerYield() override {
         while (RMC::IsRunning){
             yield();
